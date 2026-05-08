@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backrooms de la Abadía</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=VT323&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'VT323', monospace;
+        }
+        
+        #game-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            z-index: 9999;
+        }
+        
+        #game-canvas {
+            display: block;
+            margin: 0 auto;
+            background: #2d2d2d;
+            image-rendering: pixelated;
+        }
+        
+        #close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #8b0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'VT323', monospace;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10000;
+            border: 2px solid #ff0000;
+        }
+        
+        #close-btn:hover {
+            background: #ff0000;
+            animation: pulse 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #666;
+            font-size: 18px;
+            z-index: 10000;
+        }
+        
+        .flicker {
+            animation: flicker 0.1s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <button id="close-btn" onclick="closeGame()">✕ SALIR</button>
+    <canvas id="game-canvas"></canvas>
+    <div id="instructions">Usa las flechas para moverte. Encuentra la salida...</div>
+    
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        const CELL_SIZE = 40;
+        const COLS = 20;
+        const ROWS = 15;
+        
+        let maze = [];
+        let player = { x: 1, y: 1, direction: 0 };
+        let exit = { x: COLS - 2, y: ROWS - 2 };
+        let particles = [];
+        let time = 0;
+        let gameStarted = false;
+        let cameraX = 0;
+        let cameraY = 0;
+        
+        const wallColors = ['#3d3d3d', '#2a2a2a', '#353535', '#404040', '#333333'];
+        const floorColors = ['#1a1a1a', '#151515', '#1e1e1e', '#181818', '#202020'];
+        
+        function generateMaze() {
+            maze = [];
+            for (let y = 0; y < ROWS; y++) {
+                maze[y] = [];
+                for (let x = 0; x < COLS; x++) {
+                    maze[y][x] = 1;
+                }
+            }
+            
+            function carve(x, y) {
+                maze[y][x] = 0;
+                const directions = [
+                    [0, -2], [0, 2], [-2, 0], [2, 0]
+                ].sort(() => Math.random() - 0.5);
+                
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx > 0 && nx < COLS - 1 && ny > 0 && ny < ROWS - 1 && maze[ny][nx] === 1) {
+                        maze[y + dy/2][x + dx/2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+            
+            carve(1, 1);
+            
+            for (let i = 0; i < 30; i++) {
+                let rx = Math.floor(Math.random() * (COLS - 2)) + 1;
+                let ry = Math.floor(Math.random() * (ROWS - 2)) + 1;
+                if (maze[ry][rx] === 0) {
+                    maze[ry][rx] = 0;
+                }
+            }
+            
+            player = { x: 1, y: 1, direction: 0 };
+            
+            let bestDist = 0;
+            for (let y = 1; y < ROWS - 1; y++) {
+                for (let x = 1; x < COLS - 1; x++) {
+                    if (maze[y][x] === 0) {
+                        const dist = Math.abs(x - player.x) + Math.abs(y - player.y);
+                        if (dist > bestDist) {
+                            bestDist = dist;
+                            exit = { x, y };
+                        }
+                    }
+                }
+            }
+        }
+        
+        function drawMaze() {
+            const offsetX = -cameraX + canvas.width / 2 - player.x * CELL_SIZE;
+            const offsetY = -cameraY + canvas.height / 2 - player.y * CELL_SIZE;
+            
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    const screenX = x * CELL_SIZE + offsetX;
+                    const screenY = y * CELL_SIZE + offsetY;
+                    
+                    if (screenX < -CELL_SIZE || screenX > canvas.width + CELL_SIZE ||
+                        screenY < -CELL_SIZE || screenY > canvas.height + CELL_SIZE) continue;
+                    
+                    if (maze[y][x] === 1) {
+                        const colorIdx = Math.floor(Math.random() * wallColors.length);
+                        ctx.fillStyle = wallColors[colorIdx];
+                        ctx.fillRect(screenX, screenY, CELL_SIZE, CELL_SIZE);
+                        
+                        if (Math.random() > 0.7) {
+                            ctx.fillStyle = '#222';
+                            ctx.fillRect(screenX + 5, screenY + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+                        }
+                    } else {
+                        const colorIdx = Math.floor(Math.random() * floorColors.length);
+                        ctx.fillStyle = floorColors[colorIdx];
+                        ctx.fillRect(screenX, screenY, CELL_SIZE, CELL_SIZE);
+                        
+                        if (Math.random() > 0.9) {
+                            ctx.fillStyle = '#111';
+                            ctx.fillRect(screenX + Math.random() * 20, screenY + Math.random() * 20, 2, 2);
+                        }
+                    }
+                }
+            }
+            
+            const exitScreenX = exit.x * CELL_SIZE + offsetX + CELL_SIZE / 2;
+            const exitScreenY = exit.y * CELL_SIZE + offsetY + CELL_SIZE / 2;
+            
+            const glow = Math.sin(time * 3) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 100, 0, ${glow * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(exitScreenX, exitScreenY, 30 + glow * 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = `rgb(255, ${Math.floor(glow * 150)}, 0)`;
+            ctx.font = '30px Creepster';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚰', exitScreenX, exitScreenY + 10);
+        }
+        
+        function drawPlayer() {
+            const offsetX = -cameraX + canvas.width / 2 - player.x * CELL_SIZE;
+            const offsetY = -cameraY + canvas.height / 2 - player.y * CELL_SIZE;
+            
+            const screenX = player.x * CELL_SIZE + offsetX;
+            const screenY = player.y * CELL_SIZE + offsetY;
+            
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(screenX + 8, screenY + 5, 24, 20);
+            
+            ctx.fillStyle = '#f5deb3';
+            ctx.beginPath();
+            ctx.arc(screenX + 20, screenY + 12, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(screenX + 17, screenY + 10, 3, 3);
+            ctx.fillRect(screenX + 23, screenY + 10, 3, 3);
+            
+            if (Math.random() > 0.95) {
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(screenX + 17, screenY + 10, 3, 3);
+                ctx.fillRect(screenX + 23, screenY + 10, 3, 3);
+            }
+        }
+        
+        function updateParticles() {
+            if (Math.random() > 0.7) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    life: 100,
+                    size: Math.random() * 3
+                });
+            }
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawParticles() {
+            ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+            for (const p of particles) {
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            }
+        }
+        
+        function checkWin() {
+            if (player.x === exit.x && player.y === exit.y) {
+                closeGame();
+                alert('¡Has escapado de las Backrooms de la Abadía!');
+            }
+        }
+        
+        function update() {
+            time += 0.016;
+            
+            cameraX += (player.x * CELL_SIZE - cameraX) * 0.1;
+            cameraY += (player.y * CELL_SIZE - cameraY) * 0.1;
+            
+            updateParticles();
+            
+            if (Math.random() > 0.98) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        function draw() {
+            drawMaze();
+            drawPlayer();
+            drawParticles();
+            
+            if (Math.random() > 0.99) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameStarted) return;
+            
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) return;
+            
+            let newX = player.x;
+            let newY = player.y;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    newY--;
+                    player.direction = 0;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    newY++;
+                    player.direction = 2;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    newX--;
+                    player.direction = 3;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    newX++;
+                    player.direction = 1;
+                    break;
+            }
+            
+            if (newX >= 0 && newX < COLS && newY >= 0 && newY < ROWS && maze[newY][newX] === 0) {
+                player.x = newX;
+                player.y = newY;
+                checkWin();
+            }
+        });
+        
+        function startGame() {
+            gameStarted = true;
+            particles = [];
+            generateMaze();
+            gameLoop();
+        }
+        
+        function closeGame() {
+            gameStarted = false;
+            document.getElementById('game-container').style.display = 'none';
+        }
+        
+        document.querySelector('.logo').addEventListener('click', function(e) {
+            if (this.alt.includes('Colegio Regina Mundi')) {
+                e.preventDefault();
+                document.getElementById('game-container').style.display = 'block';
+                startGame();
+            }
+        });
+    </script>
+</body>
+</html>

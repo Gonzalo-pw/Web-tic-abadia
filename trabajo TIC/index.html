@@ -6,12 +6,80 @@
     <title>Tesoros de la Abadía - Proyecto Piloto Regina Mundi</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="images/logo-colegio.jpg">
+    <style>
+        #backrooms-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #backrooms-overlay.active {
+            display: flex;
+        }
+        
+        #backrooms-canvas {
+            border: 3px solid #333;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+        
+        #backrooms-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #8b0000;
+            color: #fff;
+            border: 2px solid #ff0000;
+            padding: 10px 30px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        #backrooms-close:hover {
+            background: #ff0000;
+            box-shadow: 0 0 20px #ff0000;
+        }
+        
+        #backrooms-title {
+            color: #888;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        #backrooms-message {
+            color: #666;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
+    <div id="backrooms-overlay">
+        <button id="backrooms-close" onclick="closeBackrooms()">✕ SALIR</button>
+        <div id="backrooms-title">LAS BACKROOMS DE LA ABADÍA</div>
+        <canvas id="backrooms-canvas"></canvas>
+        <div id="backrooms-message">Usa las flechas o WASD para moverte. Encuentra la salida (⚰️)</div>
+    </div>
+
+    <!-- Resto del HTML de index.html -->
     <header>
         <div class="container header-content">
             <div class="logos">
-                <img src="images/logo-colegio.jpg" alt="Logo Colegio Regina Mundi" class="logo">
+                <a href="#" onclick="openBackrooms(event)">
+                    <img src="images/logo-colegio.jpg" alt="Logo Colegio Regina Mundi" class="logo">
+                </a>
                 <img src="images/logo-abadia.png" alt="Logo Abadía del Sacromonte" class="logo">
             </div>
             <nav>
@@ -40,7 +108,6 @@
                 <p>El proyecto nace de la colaboración estratégica entre el <strong>Arzobispado de Granada</strong>, el <strong>Colegio Regina Mundi (Granada)</strong>, las <strong>Hijas de la Caridad - Educación Vicenciana</strong> y la <strong>Abadía del Sacromonte</strong>.</p>
                 <p>Bajo el lema <strong>"Saber más para servir mejor"</strong>, se establece un Proyecto Piloto denominado "Los Tesoros de la Abadía", cuya implementación está programada para el curso escolar 2025-2026.</p>
             </div>
-
             <div class="info-card">
                 <h3>Justificación y Objetivos</h3>
                 <p><strong>Justificación:</strong> Se ha detectado una desconexión significativa de los jóvenes con su herencia cultural. Por ello, el centro propone integrar el patrimonio en el currículo escolar para que el alumnado se convierta en partícipe activo de su conocimiento, valoración y difusión.</p>
@@ -57,13 +124,9 @@
                 <img src="images/edificio-colegio.webp" alt="Edificio Colegio Regina Mundi" style="width:100%; border-radius:8px; margin-bottom:1.5rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                 <h3>Nuestra Historia</h3>
                 <p>El Colegio Regina Mundi nace del compromiso educativo de la <strong>Compañía de las Hijas de la Caridad de San Vicente de Paúl</strong>, presentes en Granada desde 1860.</p>
-                <p>En 1969, el centro se traslada a su actual ubicación en la <strong>calle Arabial, 63</strong>, apostando por un modelo educativo moderno y accesible.</p>
-                <p>Con la Ley General de Educación de 1970, el colegio se convierte en Sección Filial del Instituto Ganivet, ampliando su oferta formativa a nuevas etapas y respondiendo a la creciente demanda educativa.</p>
-                <p>Hoy, Regina Mundi es un centro concertado con una trayectoria consolidada, que ofrece enseñanza en Infantil, Primaria, ESO y Bachillerato, manteniendo su vocación de servicio y su identidad vicenciana.</p>
-                <p><strong>Contacto:</strong><br>
-                Calle Arabial, 63 - 18004 Granada<br>
-                Tel: 958 250 750<br>
-                Email: info@cevreginamundiesur.es</p>
+                <p>En 1969, el centro se traslada a su actual ubicación en la <strong>calle Arabial, 63</strong>, aposta por un modelo educativo moderno y accesible.</p>
+                <p>Hoy, Regina Mundi es un centro concertado con una trayectoria consolidada, que ofrece enseñanza en Infantil, Primaria, ESO y Bachillerato.</p>
+                <p><strong>Contacto:</strong><br>Calle Arabial, 63 - 18004 Granada<br>Tel: 958 250 750</p>
             </div>
         </div>
     </section>
@@ -78,20 +141,7 @@
                 </div>
                 <h3>Historia y Patrimonio</h3>
                 <p>La Abadía del Sacromonte es una antigua abadía del siglo XVII, antaño seminario y colegio, hoy residencia de canónigos, parroquia y museo eclesiástico.</p>
-                <p>Situada en el monte de Valparaíso, sobre la ribera del río Darro y coronando el barrio del Sacromonte, es una institución con más de 400 años de historia.</p>
-                <p>Junto con la Alhambra y la Catedral, constituye el "triángulo fundamental" para comprender la realidad de Granada.</p>
-                <p><strong>Elementos destacados:</strong></p>
-                <ul style="padding-left: 1.5rem; margin-top: 1rem;">
-                    <li>Las Santas Cuevas donde se encontraron los restos de San Cecilio</li>
-                    <li>Los famosos "Libros Plúmbeos" del siglo XVI</li>
-                    <li>El Cristo de los Gitanos (obra de José Risueño, 1695)</li>
-                    <li>El claustro barroco con elementos toscanos</li>
-                    <li>Vistas panorámicas de la Alhambra y el Albaicín</li>
-                </ul>
-                <p style="margin-top: 1rem;"><strong>Contacto:</strong><br>
-                Abadía del Sacromonte, s/n - 18010 Granada<br>
-                Tel: 958 221 445<br>
-                Email: info@abadiasacromonte.org</p>
+                <p>Situada en el monte de Valparaíso, sobre la ribera del río Darro y coronando el barrio del Sacromonte.</p>
             </div>
         </div>
     </section>
@@ -99,12 +149,10 @@
     <section class="section" style="background-color: #fff;" id="mapas">
         <div class="container">
             <h2 class="section-title">Ubicaciones</h2>
-            
             <h3 style="text-align: center; margin-bottom: 1.5rem;">Colegio Regina Mundi - Calle Arabial, 63</h3>
             <div class="map-container">
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3178.66!2d-3.61224!3d37.17511!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd71fbea1c5c1f2b%3A0x8c3e3c1b1c3c1c3c!2sColegio+Regina+Mundi!5e0!3m2!1ses!2ses!4v1700000000000!5m2!1ses!2ses" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
-
             <h3 style="text-align: center; margin: 2rem 0 1.5rem;">Abadía del Sacromonte</h3>
             <div class="map-container">
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3178.12!2d-3.5771!3d37.18317405!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd71fbfc7a8b8b8b%3A0x1234567890abcdef!2sAbadia+del+Sacromonte!5e0!3m2!1ses!2ses!4v1700000000000!5m2!1ses!2ses" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -115,8 +163,8 @@
     <section class="section">
         <div class="container">
             <div class="info-card" style="text-align: center; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
-                <h3>Conviértete en un embajador cultural</h3>
-                <p>Los alumnos serán "guardianes" comprometidos con la preservación del patrimonio de la Iglesia Granadina. El plan contempla dar continuidad a esta iniciativa en años sucesivos con otros monumentos de la ciudad.</p>
+                <h3>Conviértete en un embajada cultural</h3>
+                <p>Los alumnos serán "guardianes" comprometidos con la preservación del patrimonio de la Iglesia Granadina.</p>
                 <a href="departamentos.html" style="display: inline-block; margin-top: 1rem; padding: 0.8rem 2rem; background-color: #e67e22; color: white; border-radius: 5px; font-weight: bold;">Ver trabajos por departamentos</a>
             </div>
         </div>
@@ -140,17 +188,14 @@
                 <div class="footer-section">
                     <h4>Colegio Regina Mundi</h4>
                     <p>Calle Arabial, 63<br>18004 Granada</p>
-                    <p>Tel: 958 250 750<br>Email: info@cevreginamundiesur.es</p>
                 </div>
                 <div class="footer-section">
                     <h4>Abadía del Sacromonte</h4>
                     <p>Abadía del Sacromonte, s/n<br>18010 Granada</p>
-                    <p>Tel: 958 221 445<br>Email: info@abadiasacromonte.org</p>
                 </div>
                 <div class="footer-section">
                     <h4>Proyecto</h4>
                     <p>"Los Tesoros de la Abadía"<br>Curso 2025-2026</p>
-                    <p>Arzobispado de Granada<br>Hijas de la Caridad - Educación Vicenciana</p>
                 </div>
             </div>
             <div class="footer-bottom">
@@ -158,5 +203,195 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        // JUEGO DE LAS BACKROOMS
+        const canvas = document.getElementById('backrooms-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 800;
+        canvas.height = 500;
+        
+        const CELL_SIZE = 40;
+        const COLS = 20;
+        const ROWS = 12;
+        
+        let maze = [];
+        let player = { x: 1, y: 1 };
+        let exit = { x: COLS - 2, y: ROWS - 2 };
+        let particles = [];
+        let time = 0;
+        let gameRunning = false;
+        let foundExit = false;
+        
+        const wallColors = ['#4a4a4a', '#3d3d3d', '#555555', '#454545', '#505050'];
+        const floorColors = ['#1a1a1a', '#151515', '#181818', '#1c1c1c', '#171717'];
+        
+        function generateMaze() {
+            maze = [];
+            for (let y = 0; y < ROWS; y++) {
+                maze[y] = [];
+                for (let x = 0; x < COLS; x++) {
+                    maze[y][x] = 1;
+                }
+            }
+            
+            function carve(x, y) {
+                maze[y][x] = 0;
+                const dirs = [[0,-2], [0,2], [-2,0], [2,0]].sort(() => Math.random() - 0.5);
+                
+                for (let [dx, dy] of dirs) {
+                    let nx = x + dx, ny = y + dy;
+                    if (nx > 0 && nx < COLS-1 && ny > 0 && ny < ROWS-1 && maze[ny][nx] === 1) {
+                        maze[y + dy/2][x + dx/2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+            
+            carve(1, 1);
+            
+            player = { x: 1, y: 1 };
+            
+            let maxDist = 0;
+            for (let y = 1; y < ROWS - 1; y++) {
+                for (let x = 1; x < COLS - 1; x++) {
+                    if (maze[y][x] === 0) {
+                        let dist = Math.abs(x - player.x) + Math.abs(y - player.y);
+                        if (dist > maxDist) {
+                            maxDist = dist;
+                            exit = { x, y };
+                        }
+                    }
+                }
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#0d0d0d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (maze[y][x] === 1) {
+                        let color = wallColors[Math.floor(Math.random() * wallColors.length)];
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        
+                        if (Math.random() > 0.8) {
+                            ctx.fillStyle = '#2a2a2a';
+                            ctx.fillRect(x * CELL_SIZE + 5, y * CELL_SIZE + 5, CELL_SIZE - 10, CELL_SIZE - 10);
+                        }
+                    } else {
+                        let color = floorColors[Math.floor(Math.random() * floorColors.length)];
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+            
+            // Salida
+            if (foundExit) {
+                ctx.fillStyle = `rgba(255, 100, 0, ${0.5 + Math.sin(time * 5) * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(exit.x * CELL_SIZE + 20, exit.y * CELL_SIZE + 20, 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.fillStyle = '#ff6600';
+            ctx.font = '28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚰️', exit.x * CELL_SIZE + 20, exit.y * CELL_SIZE + 32);
+            
+            // Jugador
+            ctx.fillStyle = '#c9a87c';
+            ctx.fillRect(player.x * CELL_SIZE + 5, player.y * CELL_SIZE + 8, 30, 25);
+            
+            ctx.fillStyle = '#e8d5b7';
+            ctx.beginPath();
+            ctx.arc(player.x * CELL_SIZE + 20, player.y * CELL_SIZE + 12, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#222';
+            ctx.fillRect(player.x * CELL_SIZE + 15, player.y * CELL_SIZE + 9, 4, 4);
+            ctx.fillRect(player.x * CELL_SIZE + 21, player.y * CELL_SIZE + 9, 4, 4);
+            
+            // Partículas
+            ctx.fillStyle = 'rgba(80, 80, 80, 0.4)';
+            for (let p of particles) {
+                ctx.fillRect(p.x, p.y, p.s, p.s);
+            }
+            
+            // Efectos visuales
+            if (Math.random() > 0.97) {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        function update() {
+            if (!gameRunning || foundExit) return;
+            
+            time += 0.016;
+            
+            if (Math.random() > 0.6) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    s: Math.random() * 2 + 1
+                });
+            }
+            particles = particles.filter(p => Math.random() > 0.01);
+            
+            if (Math.random() > 0.96) {
+                ctx.fillStyle = 'rgba(50,50,50,0.2)';
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 50, 50);
+            }
+            
+            if (player.x === exit.x && player.y === exit.y) {
+                foundExit = true;
+                setTimeout(() => {
+                    alert('¡Has escapado de las Backrooms de la Abadía!');
+                    closeBackrooms();
+                }, 500);
+            }
+        }
+        
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        
+        function openBackrooms(e) {
+            e.preventDefault();
+            document.getElementById('backrooms-overlay').classList.add('active');
+            gameRunning = true;
+            foundExit = false;
+            particles = [];
+            generateMaze();
+            loop();
+        }
+        
+        function closeBackrooms() {
+            gameRunning = false;
+            document.getElementById('backrooms-overlay').classList.remove('active');
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            let nx = player.x, ny = player.y;
+            
+            if (e.key === 'ArrowUp' || e.key === 'w') ny--;
+            else if (e.key === 'ArrowDown' || e.key === 's') ny++;
+            else if (e.key === 'ArrowLeft' || e.key === 'a') nx--;
+            else if (e.key === 'ArrowRight' || e.key === 'd') nx++;
+            
+            if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS && maze[ny][nx] === 0) {
+                player.x = nx;
+                player.y = ny;
+            }
+        });
+    </script>
 </body>
 </html>
