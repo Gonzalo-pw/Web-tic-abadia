@@ -750,3 +750,53 @@ footer {
         align-self: flex-start;
     }
 }
+
+/* Juegos Educativos Styles */
+.juegos-educativos {
+    padding: 3rem 0;
+    background-color: #f8f9fa;
+}
+
+.juegos-educativos-description {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.juegos-educativos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    justify-items: center;
+}
+
+.game-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 800px;
+}
+
+.game-item h3 {
+    background: #e67e22;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    margin: 0;
+}
+
+/* Responsive adjustments for juegos educativos */
+@media (max-width: 768px) {
+    .juegos-educativos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-item {
+        margin: 0 1rem;
+    }
+}
